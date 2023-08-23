@@ -143,6 +143,7 @@ def main():
         assignments = process_course(course_id)
         all_assignments.append((course_name, assignments))
 
+    print(all_assignments)
     save_to_pdf(all_assignments, f"grade_report_{datetime.now()}.pdf")
 
 
