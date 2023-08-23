@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta
+import pytz
 import os
 import requests
 import textwrap
@@ -57,14 +58,25 @@ def process_course(course_id):
                                     submission["submitted_at"], "%Y-%m-%dT%H:%M:%SZ"
                                 )
 
+                                # Assuming the timestamp is in UTC, localize it
+                                utc_zone = pytz.timezone('UTC')
+                                localized_timestamp = utc_zone.localize(submitted_at)
+
+                                # Convert to PST
+                                pst_zone = pytz.timezone('America/Los_Angeles')
+                                submitted_at_pst = localized_timestamp.astimezone(pst_zone)
+
+                                # Get the current time in PST
+                                current_time_pst = datetime.now(pst_zone)
+
                                 # Check if it has been more than 24 hours since the assignment was submitted
-                                if submitted_at < datetime.now() - timedelta(days=1):
+                                if submitted_at_pst < current_time_pst - timedelta(days=1):
                                     # print("submission is:", submission)
                                     assignments_to_grade.append(
                                         {
                                             "Assignment Name": assignment["name"],
                                             "Student Name": submission["user"]["name"],
-                                            "Submitted At": submitted_at,
+                                            "Submitted At": submitted_at_pst,
                                         }
                                     )
                     else:
@@ -143,7 +155,6 @@ def main():
         assignments = process_course(course_id)
         all_assignments.append((course_name, assignments))
 
-    print(all_assignments)
     save_to_pdf(all_assignments, f"grade_report_{datetime.now()}.pdf")
 
 
